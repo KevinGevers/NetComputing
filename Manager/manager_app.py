@@ -12,6 +12,15 @@ parking_spaces = {
 
 reservations = {}
 
+def make_public_reservation(reservation):
+    new_reservation = {}
+    for field in reservation:
+        if field == 'client_id':
+            new_reservation['uri'] = flask.url_for('get_reservation', client_id=reservation['client_id'], _external=True)
+        else:
+            new_reservation[field] = reservation[field]
+    return new_reservation
+
 @app.route('/parkingspaces', methods=['GET'])
 def get_parkingspaces():
     if len(parking_spaces) == 0:
@@ -22,7 +31,7 @@ def get_parkingspaces():
 def get_reservations():
     if len(reservations) == 0:
         flask.abort(404)
-    return flask.jsonify({'reservations': reservations})
+    return flask.jsonify({'reservations': [make_public_reservation(reservation) for key, reservation in reservations.items()]})
 
 @app.route('/reservations/<string:client_id>', methods=['GET'])
 def get_reservation(client_id):
@@ -52,7 +61,7 @@ def create_reservation():
     parking_spaces['reserved'] += 1
 
     reservations[client_id] = reservation
-    return flask.jsonify({'reservation': reservation}), 201
+    return flask.jsonify({'reservation': make_public_reservation(reservation)}), 201
 
 @app.route('/reservations/<string:client_id>', methods=['DELETE'])
 def delete_reservation(client_id):
