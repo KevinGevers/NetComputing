@@ -17,17 +17,21 @@ managers = [
     {
         'id' : 1,
         'manager_url' : 'test.nl',
-        'manager_location' : '(0.0 , 0.0)'
+        'manager_location_latitude' : '53.2405038',
+        'manager_location_longitude' : '6.536313299999961'
+            # Zernike
     },
     {
         'id' : 2,
         'manager_url' : 'test2.nl',
-        'manager_location' : '(10.0 , 10.0)'
+        'manager_location_latitude' : '10.0',
+        'manager_location_longitude' : '10.0'
     },
     {
         'id' : 3,
         'manager_url' : 'test3.nl',
-        'manager_location' : '(40.0 , 60.0)'
+        'manager_location_latitude' : '40.0',
+        'manager_location_longitude' : '60.0'
     }
 ]
         
@@ -37,12 +41,13 @@ def get_managers():
 
 @app.route('/managers', methods=['POST'])
 def create_manager():
-    if not request.json or not 'manager_url' in request.json or not 'manager_location' in request.json:
+    if not request.json or not 'manager_url' in request.json or not 'manager_location_latitude' in request.json or not 'manager_location_longitude' in request.json:
         abort(400)
     manager = {
         'id': managers[-1]['id'] + 1,
         'manager_url' : request.json['manager_url'],
-        'manager_location' : request.json['manager_location']
+        'manager_location_latitude' : request.json['manager_location_latitude'],
+        'manager_location_longitude' : request.json['manager_location_longitude']
         }
     managers.append(manager)
     return jsonify({'manager': manager}), 201

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<script type=text/javascript src="{{url_for('static', filename='jquery-3.3.1.min.js') }}"></script>
+
+<p>Click the button to get your coordinates.</p>
+
+<button onclick="getLocation()">Try It</button>
+
+<p id="demo"></p>
+
+<script>
+var x = document.getElementById("demo");
+
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(calcClosest, showError);
+    } else { 
+        x.innerHTML = "Geolocation is not supported by this browser.";
+    }
+}
+
+function showPosition(position) {
+    x.innerHTML = "Latitude: " + position.coords.latitude + 
+    "<br>Longitude: " + position.coords.longitude;
+}
+
+function calcClosest(position) {
+    x.innerHTML = "Latitude: " + position.coords.latitude + 
+    "<br>Longitude: " + position.coords.longitude;
+    
+    var mapsAPI = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins='
+        +position.coords.latitude+','+position.coords.longitude+'&destinations='
+        +'53.2405038'+','+'6.536313299999961'+'&key=AIzaSyDHjLgZjYto1wY79nAvYLXEfHeSMVsMYyQ';
+        
+    var data;
+    $.getJSON(mapsAPI, function(data){
+        //console.log( "JSON Data: " + json.destination_addresses );
+        });
+        
+    var json = JSON.parse(data);
+    alert(json.destination_addresses);    
+    //JSON.stringify(data);
+    //var json = JSON.parse(data);        
+}
+
+function showError(error) {
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            x.innerHTML = "User denied the request for Geolocation."
+            break;
+        case error.POSITION_UNAVAILABLE:
+            x.innerHTML = "Location information is unavailable."
+            break;
+        case error.TIMEOUT:
+            x.innerHTML = "The request to get user location timed out."
+            break;
+        case error.UNKNOWN_ERROR:
+            x.innerHTML = "An unknown error occurred."
+            break;
+    }
+}
+</script>
+
+</body>
+</html>
+
+
+
+
+<!-- 
+
+Google maps API key = AIzaSyDHjLgZjYto1wY79nAvYLXEfHeSMVsMYyQ
+
+
+
+    </script>   
+    <script type=text/javascript>
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    </script>
+    <script type=text/javascript>
+        $(function()
+
+
+
+
+
+
+Blekerstraat 4 lat = 53.2169782 long = 6.556467399999974
+Nijenborg 9 lat = 53.2405038 long = 6.536313299999961
+
+-->
+
+
+
+
+
+
+
+
+
+
