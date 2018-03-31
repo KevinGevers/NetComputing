@@ -1,43 +1,68 @@
 #!/usr/bin/env python
 import pika
-from sensor import Sensor, SensorStatus
-
-
-
 import json
+from socket import *
+import _thread
+
+from ParkingLot.sensor import SensorStatus
+
+BUFFER_SIZE = 128  # Small buffer for fast response
+HOST = '127.0.0.1'
+PORT = 6606
 
 
 class ParkingLot:
-    status = {}
-    sensors = []
+    sensors = set()
+    reserved = set()
     uid = -1
-    queue = None
     channel = None
 
-    reserved = set()
 
     def __init__(self, uid, manager_address):
         self.uid = uid
         queue_connection = pika.BlockingConnection(pika.ConnectionParameters(manager_address))
         self.channel = queue_connection.channel()
 
-    def sensor_update(self, sensor_status, sensor_id):
+    def handler(self, clientsock, addr):
+        raw_data = clientsock.recv(BUFFER_SIZE)
+        clientsock.close()
+
+        data = json.loads( raw_data.decode('utf-8') )
+
+        sensor_id = data['id']
+        status = SensorStatus(data['status'])
+        self.sensor_update(sensor_id, status)
+
+    def start_server(self):
+        address = (HOST, PORT)
+        serversock = socket(AF_INET, SOCK_STREAM)
+        serversock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        serversock.bind(address)
+        serversock.listen()
+        while True:
+            print('Waiting for connection...')
+            clientsock, addr = serversock.accept()
+            _thread.start_new_thread(self.handler, (clientsock, addr))
+
+    def sensor_update(self, sensor_id, sensor_status):
         print('Sensor update')
+        self.sensors.add(sensor_id)
+
         if sensor_status == SensorStatus.AVAILABLE:
             self.reserved.add(sensor_id)
         else:
-            self.reserved.remove(sensor_id)
+            self.reserved.discard(sensor_id)
 
-        self.status['reserved'] = len(self.reserved)
-        self.status['total'] = len(self.sensors)
-        self.queue_update()
+        status = {}
+        status['reserved'] = len(self.reserved)
+        status['total'] = len(self.sensors)
+        self.queue_update(status)
 
-    def queue_update(self):
-        self.channel.basic_publish(exchange='', routing_key='hello', body=json.dumps(self.status))
 
+    def queue_update(self, status):
+        self.channel.basic_publish(exchange='', routing_key='hello', body=json.dumps(status))
         print(" [x] Sent Status")
 
 
-
 lot = ParkingLot(1, 'localhost')
-lot.sensor_update(SensorStatus.AVAILABLE, 1)
+lot.start_server()
