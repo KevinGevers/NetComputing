@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <body>
-
-<script type=text/javascript src="{{url_for('static', filename='jquery-3.3.1.min.js') }}"></script>
+<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>-->
+<!--<script type=text/javascript src="{{url_for('static', filename='jquery-3.3.1.min.js') }}"></script>-->
 
 <p>Click the button to get your coordinates.</p>
 
@@ -27,22 +27,36 @@ function showPosition(position) {
 }
 
 function calcClosest(position) {
-    x.innerHTML = "Latitude: " + position.coords.latitude + 
-    "<br>Longitude: " + position.coords.longitude;
+    //x.innerHTML = "Latitude: " + position.coords.latitude + 
+    //"<br>Longitude: " + position.coords.longitude;    var bounds = new google.maps.LatLngBounds;
     
-    var mapsAPI = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins='
-        +position.coords.latitude+','+position.coords.longitude+'&destinations='
-        +'53.2405038'+','+'6.536313299999961'+'&key=AIzaSyDHjLgZjYto1wY79nAvYLXEfHeSMVsMYyQ';
-        
-    var data;
-    $.getJSON(mapsAPI, function(data){
-        //console.log( "JSON Data: " + json.destination_addresses );
-        });
-        
-    var json = JSON.parse(data);
-    alert(json.destination_addresses);    
-    //JSON.stringify(data);
-    //var json = JSON.parse(data);        
+    var origin = {lat: 55.93, lng: -3.118};
+    //var origin = {lat: position.coords.latitude, lng: position.coords.longitude};
+    var destinationA = {lat: 53.2405038, lng: 6.536313299999961};
+
+    var service = new google.maps.DistanceMatrixService;
+    service.getDistanceMatrix({
+        origins: [origin],
+        destinations: [destinationA],
+        travelMode: 'DRIVING',
+        unitSystem: google.maps.UnitSystem.METRIC,
+        avoidHighways: false,
+        avoidTolls: false
+    }, function(response, status) {
+        if (status !== 'OK') {
+            alert('Error was: ' + status);
+        } else {
+            var destinationList = response.destinationAddresses;
+            var outputDiv = document.getElementById('output');
+                outputDiv.innerHTML += 'sjksdbnfjk';            
+            var results = response.rows[0].elements;
+            for (var j = 0; j < results.length; j++) {
+                outputDiv.innerHTML += 'to ' + destinationList[j] +
+                    ': ' + results[j].distance.text + ' in ' +
+                results[j].duration.text + '<br>';
+            }
+        }
+    });
 }
 
 function showError(error) {
@@ -62,6 +76,10 @@ function showError(error) {
     }
 }
 </script>
+<div id="output"></div>
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCNg6VFdU1s6XJ2ocwyKg7kqG2hr9A_CIY&callback=calcClosest">
+</script>
 
 </body>
 </html>
@@ -71,7 +89,7 @@ function showError(error) {
 
 <!-- 
 
-Google maps API key = AIzaSyDHjLgZjYto1wY79nAvYLXEfHeSMVsMYyQ
+Google maps API key = AIzaSyCNg6VFdU1s6XJ2ocwyKg7kqG2hr9A_CIY
 
 
 
@@ -89,6 +107,60 @@ Google maps API key = AIzaSyDHjLgZjYto1wY79nAvYLXEfHeSMVsMYyQ
 
 Blekerstraat 4 lat = 53.2169782 long = 6.556467399999974
 Nijenborg 9 lat = 53.2405038 long = 6.536313299999961
+
+
+
+
+
+function calcClosest(position) {
+    //x.innerHTML = "Latitude: " + position.coords.latitude + 
+    //"<br>Longitude: " + position.coords.longitude;
+    
+    //var data = '{"name": "kevin", "age": "24", "gender": "male"}';
+    
+    var service = new google.maps.DistanceMatrixService;
+    service.getDistanceMatrix({
+        origins : [position.coords.latitude, position.coords.longitude], 
+        destination : ['53.2405038', '6.536313299999961'],
+        travelMode : 'DRIVING',
+        unitSystem: google.maps.UnitSystem.METRIC,
+        avoidHighways: false,
+        avoidTolls: false
+    }, function(responce, status) {
+        if (status !== 'OK') {
+            alert('Error was ' + status);
+        } else {
+            for (var i = 0; i < originList.length; i++) {
+              var results = response.rows[i].elements;
+              geocoder.geocode({'address': originList[i]},
+                  showGeocodedAddressOnMap(false));
+              for (var j = 0; j < results.length; j++) {
+                geocoder.geocode({'address': destinationList[j]},
+                    showGeocodedAddressOnMap(true));
+                outputDiv.innerHTML += originList[i] + ' to ' + destinationList[j] +
+                    ': ' + results[j].distance.text + ' in ' +
+                    results[j].duration.text + '<br>';
+              }
+            }
+
+    
+    
+    var mapsAPI = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins='
+        +position.coords.latitude+','+position.coords.longitude+'&destinations='
+        +'53.2405038'+','+'6.536313299999961'+'&key=AIzaSyCNg6VFdU1s6XJ2ocwyKg7kqG2hr9A_CIY';
+    //window.open(mapsAPI, '_blank'); //the url works!
+
+    $.getJSON('http://anyorigin.com/go?url=https%3A//maps.googleapis.com/maps/api/distancematrix/json%3Funits%3Dmetric%26origins%3D53.2169782%2C%25206.556467399999974%26destinations%3D53.2405038%2C%25206.536313299999961%26key%3DAIzaSyDHjLgZjYto1wY79nAvYLXEfHeSMVsMYyQ&callback=?'
+    , function(data) {
+        alert(data);
+    });
+    
+    
+    var json = JSON.parse(data);
+    x.innerHTML = "Output succes!\n" + json.destination_addresses;
+    x.innerHTML = "Output succes!\n";
+
+
 
 -->
 
