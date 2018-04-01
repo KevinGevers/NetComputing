@@ -7,23 +7,22 @@ import _thread
 from ParkingLot.sensor import SensorStatus
 
 BUFFER_SIZE = 128  # Small buffer for fast response
-HOST = '127.0.0.1'
-PORT = 6606
-
 
 class ParkingLot:
-    sensors = set()
-    reserved = set()
-    uid = -1
-    channel = None
-
-
-    def __init__(self, uid, manager_address):
+    def __init__(self, uid, port):
+        self.sensors = set()
+        self.taken = set()
         self.uid = uid
+        self.port = port
+        self.channel = None
+        print('Started parking lot on port: ' + str(port))
+
+    def set_manager(self, manager_address):
         queue_connection = pika.BlockingConnection(pika.ConnectionParameters(manager_address))
         self.channel = queue_connection.channel()
 
     def handler(self, clientsock, addr):
+        print('Received connection on port: ' + str(self.port))
         raw_data = clientsock.recv(BUFFER_SIZE)
         clientsock.close()
 
@@ -34,40 +33,40 @@ class ParkingLot:
         self.sensor_update(sensor_id, status)
 
     def start_server(self):
-        address = (HOST, PORT)
-        serversock = socket(AF_INET, SOCK_STREAM)
-        serversock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        serversock.bind(address)
-        serversock.listen()
+        address = ('localhost', self.port)
+        self.serversock = socket(AF_INET, SOCK_STREAM)
+        self.serversock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.serversock.bind(address)
+        self.serversock.listen()
         while True:
             print('Waiting for connection...')
-            clientsock, address = serversock.accept()
+            clientsock, address = self.serversock.accept()
             _thread.start_new_thread(self.handler, (clientsock, address))
 
     def sensor_update(self, sensor_id, sensor_status):
         print('Sensor update')
         self.sensors.add(sensor_id)
 
-        if sensor_status == SensorStatus.AVAILABLE:
-            self.reserved.add(sensor_id)
+        if sensor_status == SensorStatus.TAKEN:
+            self.taken.add(sensor_id)
         else:
-            self.reserved.discard(sensor_id)
+            self.taken.discard(sensor_id)
 
         status = {
             'id' : self.uid,
             'total' : len(self.sensors),
-            'reserved' : len(self.reserved)
+            'taken' : len(self.taken)
         }
 
-        status['reserved'] = len(self.reserved)
-        status['total'] = len(self.sensors)
         self.queue_update(status)
 
-
     def queue_update(self, status):
+        if not self.channel:
+            print('Error: Parking lot id="{0}" has no Manager!'.format(self.uid))
+            return
+
         self.channel.basic_publish(exchange='', routing_key='hello', body=json.dumps(status))
         print(" [x] Sent Status")
 
 
-lot = ParkingLot(1, 'localhost')
-lot.start_server()
+

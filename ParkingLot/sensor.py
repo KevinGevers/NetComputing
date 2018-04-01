@@ -1,7 +1,5 @@
 from enum import Enum
 import socket
-import time
-import random
 import json
 
 
@@ -14,12 +12,10 @@ class SensorStatus(Enum):
 class Sensor:
     status = SensorStatus.AVAILABLE
 
-    def __init__(self, host, host_port):
-        self.uid = 'sensor-' + str(random.randint(0, 9999))
-        print('Created sensor with uid = ' + self.uid)
+    def __init__(self, uid, host, host_port):
+        self.uid = 'sensor-' + str(uid)
         self.host = host
         self.host_port = host_port
-        self.update()
 
     def update(self):
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -41,12 +37,6 @@ class Sensor:
         else:
             self.status = SensorStatus.AVAILABLE
 
-
-if __name__ == "__main__":
-    for i in range(0, 30):
-        time.sleep(.1)
-        sensor = Sensor('127.0.0.1', 6606)
-        sensor.status = SensorStatus(random.randint(0, 1))
-        sensor.update()
+        self.update()
 
 
