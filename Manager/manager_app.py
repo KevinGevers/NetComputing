@@ -110,38 +110,36 @@ def not_found(error):
     return flask.make_response(flask.jsonify({'error': 'Not implemented'}), 501)
 
 #Reservation cleanup thread
-def interrupt():
-    global yourThread
-    yourThread.cancel()
+class reservations_cleanup(threading.Thread):
+    def __init__(self,reservations,lock):
+        threading.Thread.__init__(self)
+        self.reservations = reservations
+        self.lock = lock
+        self.stop = threading.Event()
 
-def clean_reservations():
-    global commonDataStruct
-    global reservations
-    with dataLock:
-        keys = []
-        for key, item in reservations.items():
-            print(key + ': ' + str(datetime.datetime.now()) + '  ' + str(item['end_time']))
-            if datetime.datetime.now() >= item['end_time']:
-                keys.append(key)
-        for key in keys:
-            print('Client: ' + key + ' reservation expired')
-            delete_reservation(key)
-    print('Cleanup finished')
-    # Set the next thread to happen
-    yourThread = threading.Timer(POOL_TIME, clean_reservations, ())
-    yourThread.start()
+    def run(self):
+        print('Startin cleanup thread')
+        while(not self.stop.wait(POOL_TIME)):
+            with self.lock:
+                keys = []
+                for key, item in self.reservations.items():
+                    print(key + ': ' + str(datetime.datetime.now()) + '  ' + str(item['end_time']))
+                    if datetime.datetime.now() >= item['end_time']:
+                        keys.append(key)
+                for key in keys:
+                    print('Client: ' + key + ' reservation expired')
+                    delete_reservation(key)
+            print('Cleanup finished')
 
-def clean_reservations_start():
-    # Do initialisation stuff here
-    global yourThread
-    # Create your thread
-    yourThread = threading.Timer(POOL_TIME, clean_reservations, ())
-    yourThread.start()
+cleaner = reservations_cleanup(reservations,dataLock)
 
-# Initiate
-clean_reservations_start()
-# When you kill Flask (SIGTERM), clear the trigger for the next thread
-atexit.register(interrupt)
+def exit_cleanup():
+    global cleaner
+    cleaner.stop.set()
+    cleaner.join()
+    print('Exiting manager webservice')
 
 if __name__ == '__main__':
+    cleaner.start()
+    atexit.register(exit_cleanup)
     app.run(debug=True)
