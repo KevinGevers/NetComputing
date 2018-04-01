@@ -12,17 +12,14 @@ class SensorStatus(Enum):
 
 
 class Sensor:
-    uid = ''
-    host = None
-    host_port = -1
     status = SensorStatus.AVAILABLE
 
     def __init__(self, host, host_port):
         self.uid = 'sensor-' + str(random.randint(0, 9999))
+        print('Created sensor with uid = ' + self.uid)
         self.host = host
         self.host_port = host_port
-
-
+        self.update()
 
     def update(self):
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -37,6 +34,12 @@ class Sensor:
             str = json.dumps(data)
             print(str)
             server.send(str.encode())
+
+    def trigger(self):
+        if(self.status == SensorStatus.AVAILABLE):
+            self.status = SensorStatus.TAKEN
+        else:
+            self.status = SensorStatus.AVAILABLE
 
 
 if __name__ == "__main__":

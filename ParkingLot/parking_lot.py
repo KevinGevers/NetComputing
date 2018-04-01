@@ -41,8 +41,8 @@ class ParkingLot:
         serversock.listen()
         while True:
             print('Waiting for connection...')
-            clientsock, addr = serversock.accept()
-            _thread.start_new_thread(self.handler, (clientsock, addr))
+            clientsock, address = serversock.accept()
+            _thread.start_new_thread(self.handler, (clientsock, address))
 
     def sensor_update(self, sensor_id, sensor_status):
         print('Sensor update')
@@ -53,7 +53,12 @@ class ParkingLot:
         else:
             self.reserved.discard(sensor_id)
 
-        status = {}
+        status = {
+            'id' : self.uid,
+            'total' : len(self.sensors),
+            'reserved' : len(self.reserved)
+        }
+
         status['reserved'] = len(self.reserved)
         status['total'] = len(self.sensors)
         self.queue_update(status)
