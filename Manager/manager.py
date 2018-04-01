@@ -1,14 +1,14 @@
 import pika
 import json
 import time
-import _thread
+from threading import Lock, Event, _start_new_thread
 
-#TODO: create data lock.
-
-POOL_TIME = 60 #Seconds
+POOL_TIME = 10 #Seconds
 RESERVATION_DURATION = 60 * 2
 
 class Manager:
+    data_lock = Lock()
+    thread_event = Event()
     location = {
         'longitude': 0.0,
         'latitude': 0.0
@@ -22,7 +22,6 @@ class Manager:
         self.channel = queue_connection.channel()
         self.channel.queue_declare(queue='hello')
         self.channel.basic_consume(self.handler, queue='hello', no_ack=True)
-
 
     def handler(self, ch, method, properties, body):
         msg = body.decode('utf-8')
@@ -39,8 +38,8 @@ class Manager:
 
 
     def start(self):
-        _thread.start_new_thread(self.listen_queue, ())
-        _thread.start_new_thread(self.reservation_cleaner, ())
+        _start_new_thread(self.listen_queue, ())
+        _start_new_thread(self.reservation_cleaner, ())
 
     def listen_queue(self):
         print(' [*] Waiting for messages.')
@@ -59,7 +58,6 @@ class Manager:
                 'available' : 0
                 }
 
-
         for (p_id, data) in self.parking_lots.items():
             status['total'] += data['total']
             status['reserved'] += data['reserved']
@@ -68,49 +66,53 @@ class Manager:
 
 
     def get_available(self):
-        available = - self.reserved
-        for key, value in self.parking_lots.items():
-            available += value
+        with self.data_lock:
+            available = - self.reserved
+            for key, value in self.parking_lots.items():
+                available += value
 
-        return available
+            return available
 
 
     def make_reservation(self, client_id):
-        now = int(time.time())
-        expiration = now + RESERVATION_DURATION
+        with self.data_lock:
+            now = int(time.time())
+            expiration = now + RESERVATION_DURATION
 
-        self.reservations[client_id] = expiration
+            self.reservations[client_id] = expiration
 
-        r = {
-            'client_id': client_id,
-            'start_time': now,
-            'end_time': expiration
-            }
+            r = {
+                'client_id': client_id,
+                'start_time': now,
+                'end_time': expiration
+                }
 
-        self.reservations[client_id] = r
+            self.reservations[client_id] = r
 
-        return r
+            return r
 
     def delete_reservation(self, client_id):
-        reservation = self.reservations.pop(client_id, None)
+        with self.data_lock:
+            r = self.reservations.pop(client_id, None)
 
-        return {
-            'result' : not (reservation == None),
-            'reservation' : reservation
-            }
+            return {
+                'result' : not (r == None),
+                'reservation' : r
+                }
 
     def get_reservation(self, client_id):
-        return self.reservations[client_id]
+        with self.data_lock:
+            return self.reservations[client_id]
 
     def reservation_cleaner(self):
-        while self.running:
-            time.sleep(5)
-        print('end')
-
-'''
-manager = Manager()
-manager.start()
-
-while(True):
-    pass
-'''
+        while(not self.thread_event.wait(POOL_TIME)):
+            with self.data_lock:
+                keys = []
+                for key, item in self.reservations.items():
+                    print(key + ': ' + str(time.time()) + '  ' + str(item['end_time']))
+                    if time.time() >= item['end_time']:
+                        keys.append(key)
+                for key in keys:
+                    print('Client: ' + key + ' reservation expired')
+                    self.delete_reservation(key)
+            print('Cleanup finished')

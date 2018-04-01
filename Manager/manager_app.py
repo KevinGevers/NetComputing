@@ -48,7 +48,7 @@ def create_reservation():
 
 @app.route('/reservations/<string:client_id>', methods=['DELETE'])
 def delete_reservation(client_id):
-    return manager.delete_reservation(client_id)
+    return flask.jsonify( manager.delete_reservation(client_id) )
 
 
 @app.errorhandler(400)
