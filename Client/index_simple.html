@@ -18,20 +18,30 @@ var managers = [];
 function getLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(calcClosest, showError);
-    } else { 
+    } else {
         x.innerHTML = "Geolocation is not supported by this browser.";
     }
 }
 
-function getManagers(callback) {
-    $.get('http://127.0.0.1:5000/managers', callback);
+function retrieveManagers(position) {
+    var closest = "nothing yet";
+    var current_shortest_dist = -1;
+    $.get('http://127.0.0.1:5000/managers', function(response) {
+        $.each(response, function(index, value) {
+            console.log(value.manager_location_latitude);
+            var temp_dist = calcDistance(value.manager_location_latitude, value.manager_location_longitude, position);
+            if (current_shortest_dist == -1 || temp_dist < current_shortest_dist) {
+                current_shortest_dist = temp_dist;
+                closest = value.manager_url;
+            }
+        });
+        // this is where you have your solution in closest and want to connect to that manager
+    });
 }
 
-function retrieveManagers() {
-    getManagers(function(json) {
-        managers = json;
-        console.log(managers);
-    });
+function calcDistance(lat, lng, position) {
+    
+    
 }
 
 function calcClosest(position) {
@@ -42,7 +52,7 @@ function calcClosest(position) {
     var service = new google.maps.DistanceMatrixService;
     service.getDistanceMatrix({
         origins: [origin],
-        destinations: [destination, {lat: 50.0, lng: 7.0}],
+        destinations: [{lat: 50.0, lng: 7.0}, destination],
         travelMode: 'DRIVING',
         unitSystem: google.maps.UnitSystem.METRIC,
         avoidHighways: false,
@@ -55,7 +65,16 @@ function calcClosest(position) {
             var results = response.rows[0].elements;
             // TODO: select the closest/fastest one and check for spots available + make reservation
             
-            
+            var closest = "nothing yet";
+            var current_shortest_dist = -1;
+            for (var j = 0; j < results.length; j++) {
+                x.innerHTML += results[j].distance.value + '<br>';
+                if (current_shortest_dist == -1 || results[j].distance.value < current_shortest_dist) {
+                    current_shortest_dist = results[j].distance.value;
+                    closest = j;  //just taking the manager id for now
+                }
+            }
+            x.innerHTML += 'closest manager is ' + closest + '<br>';
             
             
             // This is just a print function:
