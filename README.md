@@ -11,11 +11,9 @@ Our project uses the following dependencies which can be installed trough pip:
 ### RabbitMQ
 Download [RabbitMQ](https://www.rabbitmq.com/) and it's dependencies from the link.
 
-<<<<<<< Updated upstream
+
 ### Allow cross origin control
 Install the [CORS plugin](https://chrome.google.com/webstore/detail/allow-control-allow-origi/nlfbmbojpeacfghkpbjhddihlkkiljbi?hl=en) for chrome and enable it when you run the code. This removes some security so make sure to disable it after you're done.
-=======
->>>>>>> Stashed changes
 
 ### Tk
 For the UI elements of the project it is necessary to have Tk installed. 
