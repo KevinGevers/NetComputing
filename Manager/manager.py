@@ -3,6 +3,8 @@ import json
 import datetime
 from threading import Lock, Event, _start_new_thread
 
+#TODO: Currently the same lock is used for locking access to parking_lot and reservations. Make 2 locks??
+
 POOL_TIME = 10 #Seconds
 RESERVATION_DURATION = 60 * 2
 
@@ -23,28 +25,31 @@ class Manager:
         'longitude': 0.0,
         'latitude': 0.0
         }
-    running = True
-    parking_lots = {}
-    reservations = {}
+
 
     def __init__(self):
+        print('New manager!')
         queue_connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
         self.channel = queue_connection.channel()
         self.channel.queue_declare(queue='hello')
         self.channel.basic_consume(self.handler, queue='hello', no_ack=True)
+        self.parking_lots = {}
+        self.reservations = {}
 
     def handler(self, ch, method, properties, body):
         msg = body.decode('utf-8')
-        data = json.loads(msg)
+        plot_data = json.loads(msg)
 
-        print(' [x] Received parking status.')
+        print(' \n\n[x] Received parking status.')
 
-        parking_id = data['id']
-        data['available'] = data['total'] - data['taken']
 
-        self.parking_lots[parking_id] = data
+        with self.data_lock:
+            parking_id = plot_data['id']
+            if parking_id in self.parking_lots:
+                self.parking_lots.update()
+            self.parking_lots[parking_id] = plot_data
+            return
 
-        print(self.get_status())
 
 
     def start(self):
@@ -65,12 +70,15 @@ class Manager:
         status = {
                 'total' : 0,
                 'reserved' : len(self.reservations),
-                'available' : -len(self.reservations)
+                'taken' : 0,
+                'available' : 0
                 }
-
         for (p_id, data) in self.parking_lots.items():
             status['total'] += data['total']
+            status['taken'] += data['taken']
             status['available'] += data['available']
+
+        status['available'] -= status['reserved']
         return status
 
 
@@ -131,4 +139,10 @@ class Manager:
             for key in keys:
                 print('Client: ' + key + ' reservation expired')
                 print(self.delete_reservation(key))
-            print('Cleanup finished')
+
+if __name__ == '__main__':
+
+    manager = Manager()
+    manager.start()
+    while True:
+        pass
