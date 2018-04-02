@@ -29,3 +29,4 @@ For sensors, it is important to first set the port the on which ParkingLot is li
 Thereafter a sensor window will appear. This window will contain a button which can be used to trigger the state of the sensor and update the parking lot.
 
 ### Client Interface
+Open the index.html file in your (chrome) browser. Make sure you have "Cross origin resource sharing" enabled using CORS. Click on the button and give permission to get your location. After that just see what happens.
