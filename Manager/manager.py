@@ -1,6 +1,7 @@
 import pika
 import json
 import time
+import datetime
 from threading import Lock, Event, _start_new_thread
 
 POOL_TIME = 10 #Seconds
@@ -76,8 +77,8 @@ class Manager:
 
     def make_reservation(self, client_id):
         with self.data_lock:
-            now = int(time.time())
-            expiration = now + RESERVATION_DURATION
+            now = datetime.datetime.now()
+            expiration = now + datetime.timedelta(seconds=RESERVATION_DURATION)
 
             self.reservations[client_id] = expiration
 
@@ -92,8 +93,10 @@ class Manager:
             return r
 
     def delete_reservation(self, client_id):
+        print('Delete:' + client_id)
         with self.data_lock:
             r = self.reservations.pop(client_id, None)
+            print(r)
 
             return {
                 'result' : not (r == None),
@@ -109,10 +112,10 @@ class Manager:
             with self.data_lock:
                 keys = []
                 for key, item in self.reservations.items():
-                    print(key + ': ' + str(time.time()) + '  ' + str(item['end_time']))
-                    if time.time() >= item['end_time']:
+                    print(key + ': ' + str(datetime.datetime.now()) + '  ' + str(item['end_time']))
+                    if datetime.datetime.now() >= item['end_time']:
                         keys.append(key)
-                for key in keys:
-                    print('Client: ' + key + ' reservation expired')
-                    self.delete_reservation(key)
+            for key in keys:
+                print('Client: ' + key + ' reservation expired')
+                print(self.delete_reservation(key))
             print('Cleanup finished')
