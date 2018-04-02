@@ -17,21 +17,21 @@ managers = [
     {
         'id' : 1,
         'manager_url' : 'test.nl',
-        'manager_location_latitude' : '53.2405038',
-        'manager_location_longitude' : '6.536313299999961'
+        'manager_location_latitude' : 53.2405038,
+        'manager_location_longitude' : 6.536313299999961
             # Zernike
     },
     {
         'id' : 2,
         'manager_url' : 'test2.nl',
-        'manager_location_latitude' : '10.0',
-        'manager_location_longitude' : '10.0'
+        'manager_location_latitude' : 10.0,
+        'manager_location_longitude' : 10.0
     },
     {
         'id' : 3,
         'manager_url' : 'test3.nl',
-        'manager_location_latitude' : '40.0',
-        'manager_location_longitude' : '60.0'
+        'manager_location_latitude' : 50.0,
+        'manager_location_longitude' : 6.0
     }
 ]
         

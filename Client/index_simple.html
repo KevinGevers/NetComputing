@@ -17,7 +17,7 @@ var managers = [];
 
 function getLocation() {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(calcClosest, showError);
+        navigator.geolocation.getCurrentPosition(retrieveManagers, showError);
     } else {
         x.innerHTML = "Geolocation is not supported by this browser.";
     }
@@ -26,63 +26,65 @@ function getLocation() {
 function retrieveManagers(position) {
     var closest = "nothing yet";
     var current_shortest_dist = -1;
-    $.get('http://127.0.0.1:5000/managers', function(response) {
-        $.each(response, function(index, value) {
-            console.log(value.manager_location_latitude);
-            var temp_dist = calcDistance(value.manager_location_latitude, value.manager_location_longitude, position);
-            if (current_shortest_dist == -1 || temp_dist < current_shortest_dist) {
-                current_shortest_dist = temp_dist;
-                closest = value.manager_url;
-            }
-        });
-        // this is where you have your solution in closest and want to connect to that manager
+    $.get('http://127.0.0.1:5000/managers', function(managers) {
+        console.log(managers);
+        calcClosest(managers, position);
     });
 }
 
-function calcDistance(lat, lng, position) {
-    
-    
-}
-
-function calcClosest(position) {
+function calcClosest(managers, position) {
     var origin = {lat: position.coords.latitude, lng: position.coords.longitude};
     // This is just a test destination, it needs to become the list of managers' locations
-    var destination = {lat: 53.2405038, lng: 6.536313299999961};
-
+    var destination = [];
+    for (var i = 0; i <managers.managers.length; i++) {
+        var managers_location = {lat: managers.managers[i].manager_location_latitude, lng: managers.managers[i].manager_location_longitude};
+        destination.push(managers_location);
+    }
+    
+    // print test function
+    /*
+    for (var i = 0; i <destination.length; i++) {
+        x.innerHTML += destination[i].lat + ' ' + destination[i].lng + '<br>';
+    }*/
+    
     var service = new google.maps.DistanceMatrixService;
     service.getDistanceMatrix({
         origins: [origin],
-        destinations: [{lat: 50.0, lng: 7.0}, destination],
+        destinations: destination,
         travelMode: 'DRIVING',
         unitSystem: google.maps.UnitSystem.METRIC,
         avoidHighways: false,
         avoidTolls: false
     }, function(response, status) {
+        console.log(response);
         if (status !== 'OK') {
             alert('Error was: ' + status);
         } else {
             var destinationList = response.destinationAddresses;
             var results = response.rows[0].elements;
-            // TODO: select the closest/fastest one and check for spots available + make reservation
-            
             var closest = "nothing yet";
             var current_shortest_dist = -1;
             for (var j = 0; j < results.length; j++) {
-                x.innerHTML += results[j].distance.value + '<br>';
-                if (current_shortest_dist == -1 || results[j].distance.value < current_shortest_dist) {
+                // NOTE need to work out what to do in case there is no route, right now that breaks it.
+                // this happens when a location is unreachable by car or if it's just in the water.
+                x.innerHTML += 'distance of destination ' + j + ' is ' + results[j].distance.value + results[j].status + '<br>';
+                if (results[j].status !== "ZERO_RESULTS" && (current_shortest_dist == -1 || results[j].distance.value < current_shortest_dist)) {
                     current_shortest_dist = results[j].distance.value;
-                    closest = j;  //just taking the manager id for now
+                    closest = j;
                 }
             }
-            x.innerHTML += 'closest manager is ' + closest + '<br>';
+            x.innerHTML += 'closest manager is ' + managers.managers[closest].manager_url + '<br>';
             
+            // TODO: check for spots available + make reservation
+
             
             // This is just a print function:
+            /*
             for (var j = 0; j < results.length; j++) {
                 x.innerHTML += 'to ' + destinationList[j] +
                     ': ' + results[j].distance.text + ' in ' +
                 results[j].duration.text + '<br>';
-            }
+            }*/
         }
     });
 }
