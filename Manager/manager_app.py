@@ -1,5 +1,6 @@
 import flask
-from Manager.manager import Manager
+from manager import Manager
+import sys
 
 app = flask.Flask(__name__)
 
@@ -24,6 +25,10 @@ def get_reservation(client_id):
 
 @app.route('/reservations', methods=['POST'])
 def create_reservation():
+    if not flask.request.json:
+        print("not in json formating")
+    if not 'id' in flask.request.json:
+        print("no id in json file")
     if not flask.request.json or not 'id' in flask.request.json:
         flask.abort(400)
 
@@ -61,6 +66,9 @@ def not_implemented(error):
 
 
 if __name__ == '__main__':
+    port = 5001
+    if (len(sys.argv) == 2):
+        port = int(sys.argv[1])
     manager = Manager()
     manager.start()
-    app.run(debug=False, port=5000)
+    app.run(debug=False, port=port)

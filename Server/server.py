@@ -16,20 +16,20 @@ def not_found(error):
 managers = [
     {
         'id' : 1,
-        'manager_url' : 'test.nl',
+        'manager_url' : 'http://127.0.0.1:5001',
         'manager_location_latitude' : 53.2405038,
         'manager_location_longitude' : 6.536313299999961
             # Zernike
     },
     {
         'id' : 2,
-        'manager_url' : 'test2.nl',
+        'manager_url' : 'http://127.0.0.1:5002',
         'manager_location_latitude' : 10.0,
         'manager_location_longitude' : 10.0
     },
     {
         'id' : 3,
-        'manager_url' : 'test3.nl',
+        'manager_url' : 'http://127.0.0.1:5003',
         'manager_location_latitude' : 50.0,
         'manager_location_longitude' : 6.0
     }
