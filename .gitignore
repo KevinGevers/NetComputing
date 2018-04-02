@@ -1,2 +1,7 @@
-/.idea/
 /virtual/
+/.idea/
+/venv/
+ParkingLot/__pycache__/
+venv/
+venv1/
+UI/__pycache__/
