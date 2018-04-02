@@ -1,12 +1,23 @@
 import pika
 import json
-import time
 import datetime
 from threading import Lock, Event, _start_new_thread
+
+#TODO: Currently the same lock is used for locking access to parking_lot and reservations. Make 2 locks??
 
 POOL_TIME = 10 #Seconds
 RESERVATION_DURATION = 60 * 2
 
+'''
+This Class is the ParkingLot Manager
+ParkingLots at the Manager's location update the Manager with their availability status.
+The manager joins all the ParkingLots to obtain the total availability at the location.
+
+The manager is also in charge of making reservations through a REST interface. See: 'manager_app.py'
+Reservations are removed when expired.
+
+The manager also holds all the data inside the class as there is currently no external database.
+'''
 class Manager:
     data_lock = Lock()
     thread_event = Event()
@@ -14,28 +25,31 @@ class Manager:
         'longitude': 0.0,
         'latitude': 0.0
         }
-    running = True
-    parking_lots = {}
-    reservations = {}
+
 
     def __init__(self):
+        print('New manager!')
         queue_connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
         self.channel = queue_connection.channel()
         self.channel.queue_declare(queue='hello')
         self.channel.basic_consume(self.handler, queue='hello', no_ack=True)
+        self.parking_lots = {}
+        self.reservations = {}
 
     def handler(self, ch, method, properties, body):
         msg = body.decode('utf-8')
-        data = json.loads(msg)
+        plot_data = json.loads(msg)
 
-        print(' [x] Received parking status.')
+        print(' \n\n[x] Received parking status.')
 
-        parking_id = data['id']
-        data['available'] = data['total'] - data['reserved']
 
-        self.parking_lots[parking_id] = data
+        with self.data_lock:
+            parking_id = plot_data['id']
+            if parking_id in self.parking_lots:
+                self.parking_lots.update()
+            self.parking_lots[parking_id] = plot_data
+            return
 
-        print(self.get_status())
 
 
     def start(self):
@@ -55,27 +69,32 @@ class Manager:
     def get_status(self):
         status = {
                 'total' : 0,
-                'reserved' : 0,
+                'reserved' : len(self.reservations),
+                'taken' : 0,
                 'available' : 0
                 }
-
         for (p_id, data) in self.parking_lots.items():
             status['total'] += data['total']
-            status['reserved'] += data['reserved']
+            status['taken'] += data['taken']
             status['available'] += data['available']
+
+        status['available'] -= status['reserved']
         return status
 
 
     def get_available(self):
         with self.data_lock:
-            available = - self.reserved
-            for key, value in self.parking_lots.items():
-                available += value
-
-            return available
+            return self.get_status()['available']
 
 
     def make_reservation(self, client_id):
+        # Return null of no spaces left
+        if self.get_available() <= 0:
+            return None
+        # If already has a reservation return it.
+        if client_id in self.reservations:
+            return self.get_reservation(client_id)
+        # Otherwise, make reservation
         with self.data_lock:
             now = datetime.datetime.now()
             expiration = now + datetime.timedelta(seconds=RESERVATION_DURATION)
@@ -107,6 +126,8 @@ class Manager:
         with self.data_lock:
             return self.reservations[client_id]
 
+
+    # This method deletes expired reservations
     def reservation_cleaner(self):
         while(not self.thread_event.wait(POOL_TIME)):
             with self.data_lock:
@@ -118,4 +139,10 @@ class Manager:
             for key in keys:
                 print('Client: ' + key + ' reservation expired')
                 print(self.delete_reservation(key))
-            print('Cleanup finished')
+
+if __name__ == '__main__':
+
+    manager = Manager()
+    manager.start()
+    while True:
+        pass

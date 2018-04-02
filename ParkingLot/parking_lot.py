@@ -12,7 +12,7 @@ class ParkingLot:
     def __init__(self, uid, port):
         self.sensors = set()
         self.taken = set()
-        self.uid = uid
+        self.uid = 'p-lot' + str(uid)
         self.port = port
         self.channel = None
         print('Started parking lot on port: ' + str(port))
@@ -57,6 +57,7 @@ class ParkingLot:
             'total' : len(self.sensors),
             'taken' : len(self.taken)
         }
+        status['available'] = status['total'] - status['taken']
 
         self.queue_update(status)
 
@@ -67,6 +68,7 @@ class ParkingLot:
 
         self.channel.basic_publish(exchange='', routing_key='hello', body=json.dumps(status))
         print(" [x] Sent Status")
+        print(status)
 
 
 

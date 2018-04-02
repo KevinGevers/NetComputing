@@ -1,16 +1,6 @@
 import flask
 from Manager.manager import Manager
 
-'''
-MODIFICATIONS BY RAUL
-
-* Get reservations from Manager class
-* Moved reservation cleaner to the Manager class (REST service should only be used for data/state transfer)
-* Removed make_public_reservation: Redundant since the client knows his client and can construct the URL without help (wastes time + bandwidth)
-* Empty data now returns empty data and not 400.
-* Minor modifications to error handlers
-'''
-
 app = flask.Flask(__name__)
 
 
@@ -34,16 +24,18 @@ def get_reservation(client_id):
 
 @app.route('/reservations', methods=['POST'])
 def create_reservation():
-    print('Reservation post ' + str(flask.request.json))
-
     if not flask.request.json or not 'id' in flask.request.json:
         flask.abort(400)
 
     client_id = flask.request.json['id']
-    if client_id in manager.reservations:
-        return flask.jsonify( manager.get_reservation(client_id) )
+    reservation = manager.make_reservation(client_id)
 
-    return flask.jsonify( manager.make_reservation(client_id) )
+    if reservation == None:
+        # No parking spots available
+        print('return {}')
+        return flask.jsonify( {} ) # TODO: What should be returned in this case?
+
+    return flask.jsonify( reservation )
 
 
 @app.route('/reservations/<string:client_id>', methods=['DELETE'])
@@ -71,4 +63,4 @@ def not_implemented(error):
 if __name__ == '__main__':
     manager = Manager()
     manager.start()
-    app.run(debug=True, port=5000)
+    app.run(port=5000)
