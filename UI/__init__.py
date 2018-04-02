@@ -29,6 +29,7 @@ def start_sensor():
 
 if __name__ == "__main__":
     _thread.start_new_thread(start_parking, ())
+    time.sleep(1)
     _thread.start_new_thread(start_sensor, ())
 
     time.sleep(1)
