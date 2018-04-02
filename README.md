@@ -15,7 +15,7 @@ Download [RabbitMQ](https://www.rabbitmq.com/) and it's dependencies from the li
 ### Manager
 
 The resources are reservation and the reservation are the following JSON objects:
-```json
+```javascript
 [reservation] = {
     'client_id' = [string],
     'start_time' = [number],
@@ -24,7 +24,7 @@ The resources are reservation and the reservation are the following JSON objects
 ```
 
 `http://[hostname]/parkingspaces`: With the GET method the client can retrieve the total parking spaces, the number of open parking spaces and the number of reserved parking spaces. The information will be given in the following JSON format:
-```json
+```javascript
 'total' = [number],
 'available' = [number],
 'reservations' = [number]
@@ -33,11 +33,11 @@ The resources are reservation and the reservation are the following JSON objects
 'http://[hostname]/reservations': With the GET method the user can retrieve the list of reservations from the manager.
 
 `http://[hostname]/reservations`: With the POST method the user can create a new reservation if successful it will return your reservation in the following JSON format:
-```json
+```javascript
 'reservation' = [reservation]
 ```
 The following variables have to be attached to the request:
-```json
+```javascript
 'id' = [string]
 ```
 The following error codes can occur during the POST request:
@@ -46,13 +46,13 @@ The following error codes can occur during the POST request:
 * If there is no space available for the reservation it will send an empty object with the code 204.
 
 `http://[hostname]/reservations/[client_id]`: With the GET method the user can retrieve the reservation with the id {[}client\_id{]}. The reservation will be given in the following format:
-```json
+```javascript
 'reservation' = [reservation]
 ```
 If the reservation does not exist then it will return the error 404.
 
 `http://[hostname]/reservations/[client_id]`: With the DELETE method the user can delete the reservation with the id {[}client\_id{]}. If the request succeeds it will return the reservation in the following format:
-```json
+```javascript
 'result'= [Boolean]],
 'reservation' = [reservation]
 ```
@@ -60,7 +60,7 @@ If the reservation does not exit it will return the error 404.
 
 ### Server
 The manager resource follows the following format:
-```json
+```javascript
 [manager] = {
     'id'= [number],
     'manager_url' = [string]
@@ -70,7 +70,7 @@ The manager resource follows the following format:
 ```
 
 `http://[hostname]/managers`: With the GET method the user can retrieve a list of managers. In the following format:
-```json
+```javascript
 'managers' = [
     [manager],
     ...
@@ -82,7 +82,7 @@ The manager resource follows the following format:
 'manager' = [manager]
 ```
 The POST data has to follow the following format:
-```json
+```javascript
 'manager_url' = [string]
 'manager_location_latitude' = [string]
 'manager_location_longitude' = [string]
