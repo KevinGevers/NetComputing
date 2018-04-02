@@ -24,6 +24,10 @@ def get_reservation(client_id):
 
 @app.route('/reservations', methods=['POST'])
 def create_reservation():
+    if not flask.request.json:
+        print("not in json formating")
+    if not 'id' in flask.request.json:
+        print("no id in json file")
     if not flask.request.json or not 'id' in flask.request.json:
         flask.abort(400)
 

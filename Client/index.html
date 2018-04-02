@@ -2,12 +2,10 @@
 <html>
 <body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<!--<script type=text/javascript src="{{url_for('static', filename='jquery-3.3.1.min.js') }}"></script>-->
 
 <p>Click the button to get your coordinates.</p>
 
 <button onclick="getLocation()">Find parking spot!</button>
-<button onclick="retrieveManagers()">Find the managers</button>
 
 <p id="demo"></p>
 
@@ -39,13 +37,6 @@ function calcClosestWrapper(managers, position) {
         var managers_location = {lat: managers.managers[i].manager_location_latitude, lng: managers.managers[i].manager_location_longitude};
         destination.push(managers_location);
     }
-    
-    // print test function
-    /*
-    for (var i = 0; i <destination.length; i++) {
-        x.innerHTML += destination[i].lat + ' ' + destination[i].lng + '<br>';
-    }*/
-    
     calcClosest(destination, managers, position);
 }
 
@@ -83,33 +74,32 @@ function calcClosest(destination, managers, position) {
                 console.log(data);
             //$.get(managers.managers[closest].manager_url + '/parkingspaces', function(data) {
                 if (data.available > 0) {
-                    console.log('should give : ' + id);
-                    //console.log(JSON.parse([{id}]));
-                    $.post('http://127.0.0.1:5001/reservations', JSON.stringify(eval('[{"id":'+id+'}]')), function(response) {
-                        console.log(response);
-                    //$.post(managers.managers[closest].manager_url + '/reservations', JSON.jsonify(id), function(response) {
-                        if (response == 204) {
-                            // no room available
-                            //destination.splice(closest, 1);
-                            //calcClosest(destination, managers, positions);
-                        } else {
-                            // succesful reservation!
-                            x.innerHTML += 'Rerservation succesful, navigate to ' + managers.managers[closest].manager_location_latitude + ' ' + managers.managers[closest].manager_location_longitude + '<br>';
-                        }
+                    var json = JSON.stringify({id:id})
+                    console.log(json);
+                    $.ajax({
+                        type: 'POST',
+                        url: 'http://127.0.0.1:5001/reservations',
+                        //url: managers.managers[closest].manager_url + '/reservations',
+                        data: JSON.stringify ({id: id}),
+                        success: function(data, textStatus, xhr) {
+                             console.log(data); 
+                             if (xhr == 204) {
+                                // no room available
+                                destination.splice(closest, 1);
+                                calcClosest(destination, managers, positions);
+                            } else {
+                                // succesful reservation!
+                                x.innerHTML += 'Rerservation succesful, navigate to ' + managers.managers[closest].manager_location_latitude + ' ' + managers.managers[closest].manager_location_longitude + '<br>';
+                            }
+                        },
+                        contentType: "application/json",
+                        dataType: 'json'
                     });
                 } else {
-                    //destination.splice(closest, 1);
-                    //calcClosest(destination, managers, positions);
+                    destination.splice(closest, 1);
+                    calcClosest(destination, managers, positions);
                 }
             });
-            
-            // This is just a print function:
-            /*
-            for (var j = 0; j < results.length; j++) {
-                x.innerHTML += 'to ' + destinationList[j] +
-                    ': ' + results[j].distance.text + ' in ' +
-                results[j].duration.text + '<br>';
-            }*/
         }
     });
 }
