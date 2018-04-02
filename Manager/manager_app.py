@@ -66,4 +66,4 @@ def not_implemented(error):
 if __name__ == '__main__':
     manager = Manager()
     manager.start()
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5001)
