@@ -37,7 +37,7 @@ managers = [
         
 @app.route('/managers', methods=['GET'])
 def get_managers():
-    return jsonify({'managers': managers})
+    return flask.jsonify({'managers': managers})
 
 @app.route('/managers', methods=['POST'])
 def create_manager():
