@@ -1,12 +1,21 @@
 import pika
 import json
-import time
 import datetime
 from threading import Lock, Event, _start_new_thread
 
 POOL_TIME = 10 #Seconds
 RESERVATION_DURATION = 60 * 2
 
+'''
+This Class is the ParkingLot Manager
+ParkingLots at the Manager's location update the Manager with their availability status.
+The manager joins all the ParkingLots to obtain the total availability at the location.
+
+The manager is also in charge of making reservations through a REST interface. See: 'manager_app.py'
+Reservations are removed when expired.
+
+The manager also holds all the data inside the class as there is currently no external database.
+'''
 class Manager:
     data_lock = Lock()
     thread_event = Event()
@@ -31,7 +40,7 @@ class Manager:
         print(' [x] Received parking status.')
 
         parking_id = data['id']
-        data['available'] = data['total'] - data['reserved']
+        data['available'] = data['total'] - data['taken']
 
         self.parking_lots[parking_id] = data
 
@@ -55,27 +64,29 @@ class Manager:
     def get_status(self):
         status = {
                 'total' : 0,
-                'reserved' : 0,
-                'available' : 0
+                'reserved' : len(self.reservations),
+                'available' : -len(self.reservations)
                 }
 
         for (p_id, data) in self.parking_lots.items():
             status['total'] += data['total']
-            status['reserved'] += data['reserved']
             status['available'] += data['available']
         return status
 
 
     def get_available(self):
         with self.data_lock:
-            available = - self.reserved
-            for key, value in self.parking_lots.items():
-                available += value
-
-            return available
+            return self.get_status()['available']
 
 
     def make_reservation(self, client_id):
+        # Return null of no spaces left
+        if self.get_available() <= 0:
+            return None
+        # If already has a reservation return it.
+        if client_id in self.reservations:
+            return self.get_reservation(client_id)
+        # Otherwise, make reservation
         with self.data_lock:
             now = datetime.datetime.now()
             expiration = now + datetime.timedelta(seconds=RESERVATION_DURATION)
@@ -107,6 +118,8 @@ class Manager:
         with self.data_lock:
             return self.reservations[client_id]
 
+
+    # This method deletes expired reservations
     def reservation_cleaner(self):
         while(not self.thread_event.wait(POOL_TIME)):
             with self.data_lock:

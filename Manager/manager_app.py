@@ -34,15 +34,10 @@ def get_reservation(client_id):
 
 @app.route('/reservations', methods=['POST'])
 def create_reservation():
-    print('Reservation post ' + str(flask.request.json))
-
     if not flask.request.json or not 'id' in flask.request.json:
         flask.abort(400)
 
     client_id = flask.request.json['id']
-    if client_id in manager.reservations:
-        return flask.jsonify( manager.get_reservation(client_id) )
-
     return flask.jsonify( manager.make_reservation(client_id) )
 
 
