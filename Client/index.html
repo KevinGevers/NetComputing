@@ -62,17 +62,17 @@ function calcClosest(destination, managers, position) {
             for (var j = 0; j < results.length; j++) {
                 // NOTE need to work out what to do in case there is no route, right now that breaks it.
                 // this happens when a location is unreachable by car or if it's just in the water.
-                x.innerHTML += 'distance of destination ' + j + ' is ' + results[j].distance.value + results[j].status + '<br>';
+                console.log('distance of destination ' + j + ' is ' + results[j].distance.value);
                 if (results[j].status !== "ZERO_RESULTS" && (current_shortest_dist == -1 || results[j].distance.value < current_shortest_dist)) {
                     current_shortest_dist = results[j].distance.value;
                     closest = j;
                 }
             }
-            x.innerHTML += 'closest manager is ' + managers.managers[closest].manager_url + '<br>';
+            console.log('closest manager is ' + managers.managers[closest].manager_url);
             
             $.get('http://127.0.0.1:5001/parkingspaces', function(data) {
-                console.log(data);
             //$.get(managers.managers[closest].manager_url + '/parkingspaces', function(data) {
+                console.log(data);
                 if (data.available > 0) {
                     var json = JSON.stringify({id:id})
                     console.log(json);
@@ -84,11 +84,11 @@ function calcClosest(destination, managers, position) {
                         success: function(data, textStatus, xhr) {
                              console.log(data); 
                              if (xhr == 204) {
-                                // no room available
+                                console.log("no room available!");
                                 destination.splice(closest, 1);
-                                calcClosest(destination, managers, positions);
+                                calcClosest(destination, managers, position);
                             } else {
-                                // succesful reservation!
+                                console.log("succesful reservation!");
                                 x.innerHTML += 'Rerservation succesful, navigate to ' + managers.managers[closest].manager_location_latitude + ' ' + managers.managers[closest].manager_location_longitude + '<br>';
                             }
                         },
@@ -96,8 +96,14 @@ function calcClosest(destination, managers, position) {
                         dataType: 'json'
                     });
                 } else {
-                    destination.splice(closest, 1);
-                    calcClosest(destination, managers, positions);
+                    console.log("no room available!");
+                    if (destination.length > 1) {
+                        destination.splice(closest, 1);
+                        calcClosest(destination, managers, position);
+                    } else {
+                        console.log("all managers checked, but no spaces available anywhere!");
+                        x.innerHTML += "all managers checked, but no spaces available anywhere! <br>";
+                    }
                 }
             });
         }
@@ -129,61 +135,6 @@ function showError(error) {
 
 </body>
 </html>
-
-
-
-
-<!-- 
-
-Google maps API key = AIzaSyC_bWikm5FX828QjNtBvgknttu9gPloR8Q
-
-
-
-    </script>   
-    <script type=text/javascript>
-        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-    </script>
-    <script type=text/javascript>
-        $(function()
-
-
-
-
-
-
-Blekerstraat 4 lat = 53.2169782 long = 6.556467399999974
-Nijenborg 9 lat = 53.2405038 long = 6.536313299999961
-
-
-
-
-
-    
-    
-    var mapsAPI = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins='
-        +position.coords.latitude+','+position.coords.longitude+'&destinations='
-        +'53.2405038'+','+'6.536313299999961'+'&key=AIzaSyCNg6VFdU1s6XJ2ocwyKg7kqG2hr9A_CIY';
-
-    $.getJSON('http://anyorigin.com/go?url=https%3A//maps.googleapis.com/maps/api/distancematrix/json%3Funits%3Dmetric%26origins%3D53.2169782%2C%25206.556467399999974%26destinations%3D53.2405038%2C%25206.536313299999961%26key%3DAIzaSyDHjLgZjYto1wY79nAvYLXEfHeSMVsMYyQ&callback=?'
-    , function(data) {
-        alert(data);
-    });
-    
-    
-    var json = JSON.parse(data);
-    x.innerHTML = "Output succes!\n" + json.destination_addresses;
-    x.innerHTML = "Output succes!\n";
-
-
-
--->
-
-
-
-
-
-
-
 
 
 
