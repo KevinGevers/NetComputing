@@ -70,16 +70,14 @@ function calcClosest(destination, managers, position) {
             }
             console.log('closest manager is ' + managers.managers[closest].manager_url);
             
-            $.get('http://127.0.0.1:5001/parkingspaces', function(data) {
-            //$.get(managers.managers[closest].manager_url + '/parkingspaces', function(data) {
+            $.get(managers.managers[closest].manager_url + '/parkingspaces', function(data) {
                 console.log(data);
                 if (data.available > 0) {
                     var json = JSON.stringify({id:id})
                     console.log(json);
                     $.ajax({
                         type: 'POST',
-                        url: 'http://127.0.0.1:5001/reservations',
-                        //url: managers.managers[closest].manager_url + '/reservations',
+                        url: managers.managers[closest].manager_url + '/reservations',
                         data: JSON.stringify ({id: id}),
                         success: function(data, textStatus, xhr) {
                              console.log(data); 
