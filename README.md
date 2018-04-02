@@ -78,7 +78,7 @@ The manager resource follows the following format:
 ```
 
 `http://[hostname]/managers`: With the POST method the user can create a new manager. When successful it will return code 201 and the following data:
-```json
+```javascript
 'manager' = [manager]
 ```
 The POST data has to follow the following format:
