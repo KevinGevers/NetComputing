@@ -1,5 +1,6 @@
 import flask
-from Manager.manager import Manager
+from manager import Manager
+import sys
 
 app = flask.Flask(__name__)
 
@@ -65,6 +66,9 @@ def not_implemented(error):
 
 
 if __name__ == '__main__':
+    port = 5001
+    if (len(sys.argv) == 2):
+        port = int(sys.argv[1])
     manager = Manager()
     manager.start()
-    app.run(debug=False, port=5001)
+    app.run(debug=False, port=port)
